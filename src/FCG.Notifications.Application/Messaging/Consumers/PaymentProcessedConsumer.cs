@@ -1,32 +1,29 @@
-using FCG.Notifications.Application.Messaging.Events;
-using MassTransit;
+﻿using FCG.Notifications.Application.Messaging.Events;
 using Microsoft.Extensions.Logging;
 
 namespace FCG.Notifications.Application.Messaging.Consumers;
 
-public class PaymentProcessedConsumer : IConsumer<PaymentProcessedEvent>
+public class PaymentProcessedConsumer : IPaymentProcessedMessage
 {
     private readonly ILogger<PaymentProcessedConsumer> _logger;
 
     public PaymentProcessedConsumer(ILogger<PaymentProcessedConsumer> logger) => _logger = logger;
 
-    public Task Consume(ConsumeContext<PaymentProcessedEvent> context)
+    public Task Consumir(PaymentProcessedEvent dados)
     {
-        var msg = context.Message;
-
-        if (!string.Equals(msg.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(dados.Status, "Approved", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogInformation(
                 "[EMAIL] Pagamento não aprovado — e-mail de confirmação não enviado | OrderId: {OrderId}",
-                msg.OrderId);
+                dados.OrderId);
             return Task.CompletedTask;
         }
 
         _logger.LogInformation(
             "[EMAIL] Confirmação de compra enviada | UserId: {UserId} | GameId: {GameId} | OrderId: {OrderId}",
-            msg.UserId,
-            msg.GameId,
-            msg.OrderId);
+            dados.UserId,
+            dados.GameId,
+            dados.OrderId);
 
         return Task.CompletedTask;
     }
