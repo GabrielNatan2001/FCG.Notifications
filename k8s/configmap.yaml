@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fcg-notifications-worker-config
+data:
+  ASPNETCORE_ENVIRONMENT: Development
+  MessageBusConfigs__RetryCount: "5"
+  Workers__UserCreated__Ativo: "true"
+  Workers__UserCreated__Exchange: fcg.user.created
+  Workers__UserCreated__RoutingKey: notifications.user-created
+  Workers__PaymentProcessed__Ativo: "true"
+  Workers__PaymentProcessed__Exchange: fcg.payment.processed
+  Workers__PaymentProcessed__RoutingKey: notifications.payment-processed

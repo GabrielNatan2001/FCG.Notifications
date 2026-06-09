@@ -1,0 +1,47 @@
+apiVerson: apps/v1
+kind: Deployment
+metadata:
+  name: fcg-notifications-worker
+spect:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: fcg-notifications-worker
+
+    template:
+      metadata:
+        labels:
+          app: fcg-notifications-worker
+
+      spec:
+        containers:
+          - name: fcg-notifications-worker
+            image: GabrielNatan2001/fcg-notifications-worker:latest
+          
+            ports: containerPort: 8080
+
+            envFrom:
+              - configMapRef:
+                  name: fcg-notifications-worker-config
+
+              - secretRef:
+                  name: fcg-notifications-worker-secret
+            
+            readinessProbe:
+              httpGet:
+                path: /health/ready
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 15
+              timeoutSeconds: 5
+              failureThreshold: 3
