@@ -12,4 +12,17 @@ public static class DependencyInjectionInfrastructure
         services.AddSingleton<IMessageBus, MessageBus>();
         return services;
     }
+
+    public static IServiceCollection AddHealthChecksInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var rabbitHost = configuration["MessageBusConfigs:Host"]
+            ?? throw new InvalidOperationException("MessageBusConfigs:Host não configurado.");
+
+        services.AddHealthChecks()
+            .AddRabbitMQ(rabbitHost, name: "rabbitmq");
+
+        return services;
+    }
 }

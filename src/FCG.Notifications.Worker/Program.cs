@@ -2,10 +2,11 @@
 using FCG.Notifications.Infrastructure;
 using FCG.Notifications.Worker;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHealthChecksInfrastructure(builder.Configuration);
 
 builder.Services.Configure<UserCreatedWorkerConfig>(
     builder.Configuration.GetSection("Workers:UserCreated"));
@@ -15,5 +16,7 @@ builder.Services.Configure<PaymentProcessedWorkerConfig>(
 builder.Services.AddHostedService<UserCreatedWorker>();
 builder.Services.AddHostedService<PaymentProcessedWorker>();
 
-var host = builder.Build();
-host.Run();
+var app = builder.Build();
+
+app.MapHealthChecks("/health");
+app.Run();
