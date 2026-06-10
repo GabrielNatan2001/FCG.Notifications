@@ -1,47 +1,51 @@
-apiVerson: apps/v1
+apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: fcg-notifications-worker
-spect:
+
+spec:
   replicas: 1
 
   selector:
     matchLabels:
       app: fcg-notifications-worker
 
-    template:
-      metadata:
-        labels:
-          app: fcg-notifications-worker
+  template:
+    metadata:
+      labels:
+        app: fcg-notifications-worker
 
-      spec:
-        containers:
-          - name: fcg-notifications-worker
-            image: gabrielnatan2001/fcg-worker-notifications:latest
-          
-            ports: containerPort: 8080
+    spec:
+      containers:
+        - name: fcg-notifications-worker
+          image: gabrielnatan2001/fcg-worker-notifications:latest
+          imagePullPolicy: Always
 
-            envFrom:
-              - configMapRef:
-                  name: fcg-notifications-worker-config
+          ports:
+            - containerPort: 8080
 
-              - secretRef:
-                  name: fcg-notifications-worker-secret
-            
-            readinessProbe:
-              httpGet:
-                path: /health/ready
-                port: 8080
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 3
+          envFrom:
+            - configMapRef:
+                name: fcg-notifications-worker-config
 
-            livenessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-              initialDelaySeconds: 30
-              periodSeconds: 15
-              timeoutSeconds: 5
-              failureThreshold: 3
+            - secretRef:
+                name: fcg-notifications-worker-secret
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
