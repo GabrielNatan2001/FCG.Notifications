@@ -17,7 +17,7 @@ spect:
       spec:
         containers:
           - name: fcg-notifications-worker
-            image: GabrielNatan2001/fcg-notifications-worker:latest
+            image: gabrielnatan2001/fcg-worker-notifications:latest
           
             ports: containerPort: 8080
 
