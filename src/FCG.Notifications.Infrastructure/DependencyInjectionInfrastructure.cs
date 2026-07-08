@@ -10,6 +10,8 @@ public static class DependencyInjectionInfrastructure
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IMessageBus, MessageBus>();
+        services.AddRabbitMqTopologyInitializer(configuration);
+
         return services;
     }
 
