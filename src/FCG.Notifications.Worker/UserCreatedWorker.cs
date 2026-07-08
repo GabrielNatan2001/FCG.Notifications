@@ -24,32 +24,29 @@ public class UserCreatedWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (true)
+        try
         {
-            try
+            if (!_config.Ativo)
             {
-                if (!_config.Ativo)
-                {
-                    _logger.LogInformation("[WORKER][{Nome}] - Esta desativada.", NomeWorker);
-                    return;
-                }
-
-                _logger.LogInformation("[WORKER][{Nome}] Iniciado.", NomeWorker);
-
-                using var scope = _serviceProvider.CreateScope();
-                var _messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-                await _messageBus.Subscribe<UserCreatedEvent>(
-                    _config.Exchange,
-                    _config.RoutingKey,
-                    ProcessaMensagem,
-                    stoppingToken);
-
-                await Task.Delay(-1, stoppingToken);
+                _logger.LogInformation("[WORKER][{Nome}] - Esta desativada.", NomeWorker);
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError("[WORKER][{Nome}][EXCEPTION]: {Exception}", NomeWorker, ex.ToString());
-            }
+
+            _logger.LogInformation("[WORKER][{Nome}] Iniciado.", NomeWorker);
+
+            using var scope = _serviceProvider.CreateScope();
+            var _messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+            await _messageBus.Subscribe<UserCreatedEvent>(
+                _config.Exchange,
+                _config.RoutingKey,
+                ProcessaMensagem,
+                stoppingToken);
+
+            await Task.Delay(-1, stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("[WORKER][{Nome}][EXCEPTION]: {Exception}", NomeWorker, ex.ToString());
         }
     }
 
