@@ -1,50 +1,55 @@
 ﻿# FCG.Notifications
 
-Worker responsável por **simular o envio de e-mails** via log no console. Consome eventos do RabbitMQ e registra as notificações que seriam disparadas em produção.
+Microsserviço de notificações da FCG. Na Fase 3, o processamento foi migrado do
+worker 24/7 para uma **Azure Function (.NET 8 Isolated)** acionada pelo RabbitMQ.
 
 ## Projetos
 
 | Projeto | Descrição |
 |---|---|
-| `FCG.Notifications.Worker` | Consumers de eventos de usuário e pagamento |
-| `FCG.Notifications.Application` | Handlers de notificação |
-| `FCG.Notifications.Infrastructure` | Integração com RabbitMQ |
+| `FCG.Notifications.Function` | Implementação serverless utilizada na Fase 3 |
+| `FCG.Notifications.Application` | Contratos, eventos e lógica de notificação |
+| `FCG.Notifications.Infrastructure` | Integração legada com RabbitMQ |
+| `FCG.Notifications.Worker` | Worker legado da Fase 2; não deve ser implantado |
 
-## Imagem Docker
+## Eventos da Function
 
-`gabrielnatan2001/fcg-worker-notifications:latest`
+| Fila | Evento | Ação |
+|---|---|---|
+| `notifications.user-created-queue` | `UserCreatedEvent` | Simula e-mail de boas-vindas |
+| `notifications.payment-processed-queue` | `PaymentProcessedEvent` aprovado | Simula confirmação de compra |
 
-## Eventos consumidos
-
-| Evento | Ação simulada |
-|---|---|
-| `UserCreatedEvent` | E-mail de boas-vindas |
-| `PaymentProcessedEvent` (Approved) | Confirmação de compra |
-
-## Variáveis de ambiente
-
-| Variável (Docker/K8s) | appsettings | Obrigatória | Descrição | Exemplo |
-|---|---|---|---|---|
-| `ASPNETCORE_ENVIRONMENT` | — | Sim | Ambiente de execução | `Production` |
-| `MessageBusConfigs__Host` | `MessageBusConfigs:Host` | Sim | URI do RabbitMQ | `amqp://admin:admin@rabbitmq:5672/` |
-| `MessageBusConfigs__RetryCount` | `MessageBusConfigs:RetryCount` | Não | Tentativas de reconexão | `5` |
-| `Workers__UserCreated__Ativo` | `Workers:UserCreated:Ativo` | Sim | Habilita consumer de usuário criado | `true` |
-| `Workers__UserCreated__Exchange` | `Workers:UserCreated:Exchange` | Sim | Exchange do evento | `fcg.user.created` |
-| `Workers__UserCreated__RoutingKey` | `Workers:UserCreated:RoutingKey` | Sim | Routing key do evento | `notifications.user-created` |
-| `Workers__PaymentProcessed__Ativo` | `Workers:PaymentProcessed:Ativo` | Sim | Habilita consumer de pagamento | `true` |
-| `Workers__PaymentProcessed__Exchange` | `Workers:PaymentProcessed:Exchange` | Sim | Exchange do pagamento | `fcg.payment.processed` |
-| `Workers__PaymentProcessed__RoutingKey` | `Workers:PaymentProcessed:RoutingKey` | Sim | Routing key do pagamento | `notifications.payment-processed` |
-
-> Este serviço **não utiliza banco de dados**.
+As filas seguem a convenção `{routingKey}-queue` e são provisionadas pelo
+`FCG.Infra/rabbitmq/definitions.json`.
 
 ## Executar localmente
 
+Pré-requisitos:
+
+- .NET 8 SDK
+- Azure Functions Core Tools v4
+- RabbitMQ acessível
+
 ```bash
-dotnet run --project src/FCG.Notifications.Worker
+cd src/FCG.Notifications.Function
+cp local.settings.json.example local.settings.json
+# Ajuste a conexão RabbitMQ no arquivo local
+func start
 ```
 
-Requer RabbitMQ acessível (padrão local: `localhost:5672`). Para subir a stack completa, use o [FCG.Infra](../FCG.Infra/README.md).
+## Deploy serverless
 
-## Deploy
+O arquivo [`infra/azure-function/main.bicep`](infra/azure-function/main.bicep)
+provisiona Storage Account, Consumption Plan e Function App.
 
-Manifests Kubernetes em `k8s/`. Instruções completas no [README do FCG.Infra](../FCG.Infra/README.md).
+```bash
+az group create -n fcg-notifications-rg -l brazilsouth
+az deployment group create \
+  -g fcg-notifications-rg \
+  -f infra/azure-function/main.bicep \
+  --parameters rabbitMqConnectionString='amqp://admin:admin@<host>:5672/'
+
+func azure functionapp publish fcg-notifications-func
+```
+
+O RabbitMQ precisa ser acessível pela Function hospedada no Azure.

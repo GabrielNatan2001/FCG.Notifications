@@ -1,4 +1,4 @@
-# Build results
+﻿# Build results
 bin/
 obj/
 
@@ -47,6 +47,7 @@ Desktop.ini
 
 # Environment files
 .env
+local.settings.json
 
 # Test results
 TestResults/
