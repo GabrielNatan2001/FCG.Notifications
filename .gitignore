@@ -47,7 +47,6 @@ Desktop.ini
 
 # Environment files
 .env
-local.settings.json
 
 # Test results
 TestResults/
